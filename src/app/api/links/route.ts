@@ -1,10 +1,14 @@
+// src/app/api/links/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const schema = z.object({
   targetUrl: z.string().url(),
-  code: z.string().regex(/^[A-Za-z0-9]{6,8}$/).optional(),
+  code: z
+    .string()
+    .regex(/^[A-Za-z0-9]{6,8}$/)
+    .optional(),
 });
 
 function randomCode() {
@@ -22,7 +26,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json();
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+
+  if (!parsed.success) {
+    // This is the only line that changed
+    return NextResponse.json(
+      { error: parsed.error.issues[0].message },
+      { status: 400 }
+    );
+  }
 
   const { targetUrl, code } = parsed.data;
   const finalCode = code || randomCode();
